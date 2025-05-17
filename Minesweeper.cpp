@@ -6,65 +6,325 @@
 #include <stdlib.h>
 // stdlib.h for system("cls");
 // stdlib.h for rand() & srand()
-// srand(time(NULL));  // åˆå§‹åŒ–éšæœºæ•°ç”Ÿæˆå™¨
-// int random_number = rand() % 100;  // ç”Ÿæˆ 0 åˆ° 99 ä¹‹é—´çš„éšæœºæ•°
+// srand(time(NULL));  // ³õÊ¼»¯Ëæ»úÊıÉú³ÉÆ÷
+// int random_number = rand() % 100;  // Éú³É 0 µ½ 99 Ö®¼äµÄËæ»úÊı
 
 using namespace std;
 // map_size:9x9
 //+---+ x---x
 //| P | | S |
 //+---+ x---X
-// +---+---+---+---+---+---+---+---+---+ y = 37
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+
-// |   |   |   |   |   |   |   |   |   |
-// +---+---+---+---+---+---+---+---+---+ x = 19
+// 0123456789
+//     1   2   3   4   5   6   7   8   9
+//   +---+---+---+---+---+---+---+---+---+ y = 37
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+
+//   |   |   |   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+---+---+---+ x = 19
+// p(x,y) (x,y [1,9])
+// display( ((x-1)*4)+2 , 2*y-1 )
 int mine_map[13][13];
-char show_map[10][38];
+char display_map[19][37];
 int calc_map[13][13];
+int special_map[13][13];
 struct point
 {
     int x;
     int y;
-} mine[11], selector;
-void show_map()
+} mine[11], selector, p1;
+point locate_point(point p)
 {
+    p.x = (p.x - 1) * 4 + 2;
+    p.y = p.y * 2 - 1;
+    return p;
+}
+void print_screen()
+{
+    system("cls");
+    cout << "    1   2   3   4   5   6   7   8   9" << endl;
+    for (int i = 0; i <= 18; i++)
+    {
+        if (i % 2 == 1)
+        {
+            cout << i / 2 + 1 << ' ';
+        }
+        else
+        {
+            cout << "  ";
+        }
+        for (int j = 0; j <= 36; j++)
+        {
+            cout << display_map[i][j];
+        }
+        cout << endl;
+    }
+    cout << "ÊäÈëÒÔÏÂ×Ö·ûÒÔ²Ù¿Ø(²»Çø·Ö´óĞ¡Ğ´)£º" << endl;
+    cout << "W A S D : ÒÆ¶¯Ñ¡¿ò" << endl;
+    cout << "Z : ±ê¼Ç/ÎÊºÅ/È¡Ïû   X : °²È«Õ¹¿ª(¶ÔÊı×Ö·½¸ñÓĞĞ§)   C : Ö±½ÓÕ¹¿ª" << endl;
+    cout << "(num1,num2) : Á¬ĞøÊäÈëÁ½¸öÊı×Ö£¬¿ìËÙÒÆ¶¯Ñ¡¿òÖÁÄ¿±ê·½¸ñ" << endl;
+    cout << "ÇëÊäÈë£º";
+    return;
+}
+void send_error(int style)
+{
+    // style : 1: ²Ù×÷×Ö·û´íÎó   2£ºÎŞ·¨²Ù×÷
+    system("cls");
+    if (style == 1)
+    {
+        cout << "Wrong Command!" << endl;
+        cout << "Please use the supported letter & format!";
+    }
+    else if (style == 2)
+    {
+        cout << "Unable to perform the operation!";
+    }
+    Sleep(2);
+    print_screen();
+    return;
+}
+
+void draw_selector()
+{
+    // display_map[(selector.x - 1) * 4 + 2][selector.y * 2 + 1]
+    display_map[(selector.x - 1) * 4][selector.y * 2] = 'X';
+    display_map[(selector.x - 1) * 4][selector.y * 2 + 2] = 'X';
+    display_map[(selector.x - 1) * 4 + 4][selector.y * 2] = 'X';
+    display_map[(selector.x - 1) * 4 + 4][selector.y * 2 + 2] = 'X';
+}
+
+void erase_selector()
+{
+    display_map[(selector.x - 1) * 4][selector.y * 2] = '+';
+    display_map[(selector.x - 1) * 4][selector.y * 2 + 2] = '+';
+    display_map[(selector.x - 1) * 4 + 4][selector.y * 2] = '+';
+    display_map[(selector.x - 1) * 4 + 4][selector.y * 2 + 2] = '+';
+}
+
+void read_command()
+{
+    char c;
+    cin >> c;
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+    {
+        erase_selector();
+        if (c >= 'A' && c <= 'Z')
+        {
+            c -= 'A' - 'a';
+        }
+        if (c == 'w')
+        {
+            if (selector.x > 1)
+            {
+                selector.x -= 1;
+            }
+            else
+            {
+                send_error(2);
+            }
+        }
+        else if (c == 'a')
+        {
+            if (selector.y > 1)
+            {
+                selector.y -= 1;
+            }
+            else
+            {
+                send_error(2);
+            }
+        }
+        else if (c == 's')
+        {
+            if (selector.y < 9)
+            {
+                selector.y += 1;
+            }
+            else
+            {
+                send_error(2);
+            }
+        }
+        else if (c == 'd')
+        {
+            if (selector.x < 9)
+            {
+                selector.y += 1;
+            }
+            else
+            {
+                send_error(2);
+            }
+        }
+        else if (c == 'z')
+        {
+            p1 = locate_point(selector);
+            if (display_map[p1.x][p1.y] == ' ' || display_map[p1.x][p1.y] == 'P' || display_map[p1.x][p1.y] == '?')
+            {
+                if (special_map[selector.x][selector.y] == 0)
+                {
+                    special_map[selector.x][selector.y] = 1;
+                    display_map[p1.x][p1.y] = 'P';
+                }
+                else if (special_map[selector.x][selector.y] == 1)
+                {
+                    special_map[selector.x][selector.y] = 2;
+                    display_map[p1.x][p1.y] = '?';
+                }
+                else if (special_map[selector.x][selector.y] == 2)
+                {
+                    special_map[selector.x][selector.y] = 0;
+                    display_map[p1.x][p1.y] = ' ';
+                }
+            }
+            else
+            {
+                send_error(1);
+            }
+        }
+        // NOW
+    }
+    return;
+}
+
+void developer_show_map()
+{
+    cout << "mine_map:" << endl;
     for (int i = 1; i <= 9; i++)
     {
+        for (int j = 1; j <= 9; j++)
+        {
+            cout << mine_map[i][j] << ' ';
+        }
+        cout << endl;
+    }
+    cout << "calc_map:" << endl;
+    for (int i = 1; i <= 9; i++)
+    {
+        for (int j = 1; j <= 9; j++)
+        {
+            cout << calc_map[i][j] << ' ';
+        }
+        cout << endl;
+    }
+    cout << "display_map" << endl;
+    for (int i = 0; i <= 18; i++)
+    {
+        for (int j = 0; j <= 36; j++)
+        {
+            cout << display_map[i][j];
+        }
+        cout << endl;
+    }
+    return;
+}
+
+void draw_map()
+{
+    memset(display_map, ' ', sizeof(display_map));
+    for (int i = 0; i <= 18; i += 2)
+    {
+        for (int j = 0; j <= 36; j++)
+        {
+            if (j % 4 == 0)
+            {
+                display_map[i][j] = '+';
+            }
+            else
+            {
+                display_map[i][j] = '-';
+            }
+        }
+    }
+    for (int i = 1; i <= 17; i += 2)
+    {
+        for (int j = 0; j <= 37; j += 4)
+        {
+            display_map[i][j] = '|';
+        }
     }
 
     return;
 }
+
 void generate()
 {
     memset(mine_map, 0, sizeof(mine_map));
     srand(time(NULL));
     int i = 1;
     int randx, randy;
+    bool judge_edge[4]; // 0 == left; 1 == top; 2 == button; 3 == right;
+    memset(judge_edge, 0, sizeof(judge_edge));
+    int cnt_edge = 0;
     while (i <= 10)
     {
         randx = rand() % 9 + 1;
         randy = rand() % 9 + 1;
         if (mine_map[randx][randy] == 0)
         {
-            mine_map[randx][randy] = 1;
-            mine[i].x = randx;
-            mine[i].y = randy;
-            i++;
+            if (cnt_edge < 4)
+            {
+                if (randx == 1 && judge_edge[0] == 0)
+                {
+                    judge_edge[0] = 1;
+                    cnt_edge++;
+                    mine_map[randx][randy] = 1;
+                    mine[i].x = randx;
+                    mine[i].y = randy;
+                    i++;
+                    continue;
+                }
+                else if (randx == 9 && judge_edge[3] == 0)
+                {
+                    judge_edge[3] = 1;
+                    cnt_edge++;
+                    mine_map[randx][randy] = 1;
+                    mine[i].x = randx;
+                    mine[i].y = randy;
+                    i++;
+                    continue;
+                }
+                else if (randy == 1 && judge_edge[1] == 0)
+                {
+                    judge_edge[1] = 1;
+                    cnt_edge++;
+                    mine_map[randx][randy] = 1;
+                    mine[i].x = randx;
+                    mine[i].y = randy;
+                    i++;
+                    continue;
+                }
+                else if (randy == 9 && judge_edge[2] == 0)
+                {
+                    judge_edge[2] = 1;
+                    cnt_edge++;
+                    mine_map[randx][randy] = 1;
+                    mine[i].x = randx;
+                    mine[i].y = randy;
+                    i++;
+                    continue;
+                }
+            }
+            else
+            {
+                mine_map[randx][randy] = 1;
+                mine[i].x = randx;
+                mine[i].y = randy;
+                i++;
+            }
         }
         else
         {
@@ -91,7 +351,11 @@ void generate()
 
 int main()
 {
-
+    generate();
+    draw_map();
+    print_screen();
+    read_command();
+    // developer_show_map();
     // initialize();
     return 0;
 }
