@@ -79,6 +79,7 @@ void print_screen()
     cout << "ÇëÊäÈë£º";
     return;
 }
+
 void send_error(int style)
 {
     // style : 1: ²Ù×÷×Ö·û´íÎó   2£ºÎÞ·¨²Ù×÷
@@ -112,6 +113,37 @@ void erase_selector()
     display_map[(selector.x - 1) * 4][selector.y * 2 + 2] = '+';
     display_map[(selector.x - 1) * 4 + 4][selector.y * 2] = '+';
     display_map[(selector.x - 1) * 4 + 4][selector.y * 2 + 2] = '+';
+}
+
+void gameover;
+
+queue<point> q;
+void bfs_reveal_map()
+{
+    int delta_x[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    int delta_y[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
+    while (!q.empty())
+    {
+        point p = q.front();
+        q.pop();
+        point ps = locate_point(p);
+        if (!mine_map[p.x][p.y])
+        {
+            display_map[ps.x][ps.y] = ' ';
+        }
+        else
+        {
+            gameover();
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            if (p.x + delta_x[i] >= 1 && p.x + delta_x[i] <= 9 && p.y + delta_y[i] >= 1 && p.y + delta_y[i] <= 9)
+            {
+            }
+        }
+    }
+
+    return;
 }
 
 void read_command()
@@ -174,26 +206,27 @@ void read_command()
             p1 = locate_point(selector);
             if (display_map[p1.x][p1.y] == ' ' || display_map[p1.x][p1.y] == 'P' || display_map[p1.x][p1.y] == '?')
             {
-                if (special_map[selector.x][selector.y] == 0)
+                if (display_map[p1.x][p1.y] == 'M')
                 {
-                    special_map[selector.x][selector.y] = 1;
+                    // special_map[selector.x][selector.y] = 1;
                     display_map[p1.x][p1.y] = 'P';
                 }
-                else if (special_map[selector.x][selector.y] == 1)
+                else if (display_map[p1.x][p1.y] == 'P')
                 {
-                    special_map[selector.x][selector.y] = 2;
+                    // special_map[selector.x][selector.y] = 2;
                     display_map[p1.x][p1.y] = '?';
                 }
-                else if (special_map[selector.x][selector.y] == 2)
+                else if (display_map[p1.x][p1.y] == '?')
                 {
-                    special_map[selector.x][selector.y] = 0;
-                    display_map[p1.x][p1.y] = ' ';
+                    // special_map[selector.x][selector.y] = 0;
+                    display_map[p1.x][p1.y] = 'M';
                 }
             }
             else
             {
                 send_error(1);
             }
+            draw_selector();
         }
         // NOW
     }
@@ -234,7 +267,7 @@ void developer_show_map()
 
 void draw_map()
 {
-    memset(display_map, ' ', sizeof(display_map));
+    memset(display_map, 'M', sizeof(display_map));
     for (int i = 0; i <= 18; i += 2)
     {
         for (int j = 0; j <= 36; j++)
