@@ -116,18 +116,20 @@ void draw_selector()
 {
     // WRONG!!!
     // display_map[(selector.x - 1) * 4 + 2][selector.y * 2 + 1]
-    display_map[(selector.y - 1) * 4][selector.x * 2] = 'X';
-    display_map[(selector.y - 1) * 4][selector.x * 2 + 2] = 'X';
-    display_map[(selector.y - 1) * 4 + 4][selector.x * 2] = 'X';
-    display_map[(selector.y - 1) * 4 + 4][selector.x * 2 + 2] = 'X';
+    point s = locate_point(selector);
+    display_map[s.x - 1][s.y - 2] = 'X';
+    display_map[s.x - 1][s.y + 2] = 'X';
+    display_map[s.x + 1][s.y - 2] = 'X';
+    display_map[s.x + 1][s.y + 2] = 'X';
 }
 
 void erase_selector()
 {
-    display_map[(selector.x - 1) * 4][selector.y * 2] = '+';
-    display_map[(selector.x - 1) * 4][selector.y * 2 + 2] = '+';
-    display_map[(selector.x - 1) * 4 + 4][selector.y * 2] = '+';
-    display_map[(selector.x - 1) * 4 + 4][selector.y * 2 + 2] = '+';
+    point s = locate_point(selector);
+    display_map[s.x - 1][s.y - 2] = '+';
+    display_map[s.x - 1][s.y + 2] = '+';
+    display_map[s.x + 1][s.y - 2] = '+';
+    display_map[s.x + 1][s.y + 2] = '+';
 }
 
 void gameover()
@@ -162,7 +164,7 @@ void bfs_reveal_map()
         {
             display_map[ps.x][ps.y] = ' ';
         }
-        if (display_map[ps.x][ps.y] == '0')
+        if (display_map[ps.x][ps.y] == ' ')
         {
             for (int i = 0; i < 8; i++)
             {
@@ -187,6 +189,11 @@ void bfs_reveal_map()
 void click_to_show(point p)
 {
     point pp = locate_point(p);
+    if (display_map[pp.x][pp.y] == 'P' || display_map[pp.x][pp.y] == '?')
+    {
+        send_error(3);
+        return;
+    }
     if (mine_map[p.x][p.y] == 1)
     {
         gameover();
@@ -228,6 +235,23 @@ void click_to_help_show(point p)
         if (tot == calc_map[p.x][p.y])
         {
             q.push(p);
+            for (int i = 0; i <= 7; i++)
+            {
+                for (int j = 0; j <= 7; j++)
+                {
+                    px.x = p.x + delta_x[i];
+                    px.y = p.y + delta_y[j];
+                    pp = locate_point(px);
+                    if (display_map[pp.x][pp.y] == 'N')
+                    {
+                        display_map[pp.x][pp.y] = calc_map[p.x][p.y] + '0';
+                        if (calc_map[p.x][p.y] == 0)
+                        {
+                            display_map[pp.x][pp.y] = ' ';
+                        }
+                    }
+                }
+            }
             bfs_reveal_map();
         }
     }
@@ -276,7 +300,7 @@ void read_command()
         {
             if (selector.y < 9)
             {
-                selector.y += 1;
+                selector.x += 1;
             }
             else
             {
@@ -297,9 +321,9 @@ void read_command()
         else if (c == 'z')
         {
             p1 = locate_point(selector);
-            if (display_map[p1.x][p1.y] == ' ' || display_map[p1.x][p1.y] == 'P' || display_map[p1.x][p1.y] == '?')
+            if (display_map[p1.x][p1.y] == 'N' || display_map[p1.x][p1.y] == 'P' || display_map[p1.x][p1.y] == '?')
             {
-                if (display_map[p1.x][p1.y] == 'M')
+                if (display_map[p1.x][p1.y] == 'N')
                 {
                     // special_map[selector.x][selector.y] = 1;
                     display_map[p1.x][p1.y] = 'P';
@@ -312,7 +336,7 @@ void read_command()
                 else if (display_map[p1.x][p1.y] == '?')
                 {
                     // special_map[selector.x][selector.y] = 0;
-                    display_map[p1.x][p1.y] = 'M';
+                    display_map[p1.x][p1.y] = 'N';
                 }
             }
             else
@@ -332,7 +356,7 @@ void read_command()
     }
     else if (c >= '0' && c <= '9')
     {
-        int tx = c;
+        int tx = c - '0';
         int ty;
         cin >> ty;
         erase_selector();
@@ -521,11 +545,15 @@ int main()
     selector.x = 1;
     selector.y = 1;
     draw_selector();
-    print_screen();
-    // while (flag)
-    // {
-    //     read_command();
-    // }
+    // print_screen();
+    flag = 1;
+    while (flag)
+    {
+        system("cls");
+        // print_screen();
+        developer_show_map();
+        read_command();
+    }
     // read_command();
     // developer_show_map();
     // initialize();

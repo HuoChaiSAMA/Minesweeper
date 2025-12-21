@@ -1,4 +1,4 @@
- // while (flag)
-    // {
-    //     read_command();
-    // }
+while (flag)
+    {
+        read_command();
+    }
