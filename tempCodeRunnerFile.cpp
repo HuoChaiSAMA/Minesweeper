@@ -1,4 +1,2 @@
-while (flag)
-    {
-        read_command();
-    }
+
+    system("cls");

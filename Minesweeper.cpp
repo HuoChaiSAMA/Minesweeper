@@ -44,6 +44,7 @@ int mine_map[13][13];
 char display_map[19][37];
 int calc_map[13][13];
 int special_map[13][13];
+int tot = 10, tot_correct = 10;
 bool flag = 1;
 struct point
 {
@@ -78,7 +79,8 @@ void print_screen()
         }
         cout << endl;
     }
-    cout << "输入以下字符以操控(不区分大小写)：" << endl;
+    cout << "剩余地雷: " << tot << endl;
+    cout << "输入以下字符以操控(不区分大小写): " << endl;
     cout << "W A S D : 移动选框" << endl;
     cout << "Z : 标记/问号/取消   X : 安全展开(对数字方格有效)   C : 直接展开" << endl;
     cout << "(num1,num2) : 连续输入两个数字，快速移动选框至目标方格" << endl;
@@ -107,7 +109,7 @@ void send_error(int style)
     {
         cout << "无法标记已经展开的方格!";
     }
-    Sleep(2);
+    Sleep(2000);
     print_screen();
     return;
 }
@@ -131,16 +133,73 @@ void erase_selector()
     display_map[s.x + 1][s.y - 2] = '+';
     display_map[s.x + 1][s.y + 2] = '+';
 }
+queue<point> q;
+void endgame()
+{
+    cout << "    1   2   3   4   5   6   7   8   9" << endl;
+    for (int i = 0; i <= 18; i++)
+    {
+        if (i % 2 == 1)
+        {
+            cout << i / 2 + 1 << ' ';
+        }
+        else
+        {
+            cout << "  ";
+        }
+        for (int j = 0; j <= 36; j++)
+        {
+            cout << display_map[i][j];
+        }
+        cout << endl;
+    }
+    if (tot == 0)
+    {
+        cout << "You Did It !!!";
+    }
+    else
+    {
+        cout << "Game Over";
+    }
 
+    return;
+}
 void gameover()
 {
     system("cls");
-    cout << "Game Over";
+    point px, pp;
+    // cout << "Game Over";
+    for (int i = 1; i <= 9; i++)
+    {
+        for (int j = 1; j <= 9; j++)
+        {
+            px.x = i;
+            px.y = j;
+            pp = locate_point(px);
+            if (display_map[pp.x][pp.y] == 'N')
+            {
+
+                display_map[pp.x][pp.y] = calc_map[px.x][px.y] + '0';
+                if (calc_map[px.x][px.y] == 0)
+                {
+                    display_map[pp.x][pp.y] = ' ';
+                }
+                else if (calc_map[px.x][px.y] == 9)
+                {
+                    display_map[pp.x][pp.y] = '*';
+                }
+            }
+        }
+    }
     flag = 0;
+    while (!q.empty())
+    {
+        q.pop();
+    }
+    endgame();
     return;
 }
 
-queue<point> q;
 void bfs_reveal_map()
 {
     int delta_x[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
@@ -210,48 +269,58 @@ void click_to_help_show(point p)
 {
     point pp = locate_point(p);
     point px;
-    if (display_map[pp.x][pp.y] == 'N')
+    if (display_map[pp.x][pp.y] == 'N' || display_map[pp.x][pp.y] == ' ')
     {
         send_error(3);
     }
     else
     {
         int tot = 0;
+        // int rled = 0;
         int delta_x[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
         int delta_y[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
-        for (int i = 0; i <= 7; i++)
+        for (int j = 0; j <= 7; j++)
         {
-            for (int j = 0; j <= 7; j++)
+            px.x = p.x + delta_x[j];
+            px.y = p.y + delta_y[j];
+            if (px.x < 1 || px.x > 9 || px.y < 1 || px.y > 9)
             {
-                px.x = p.x + delta_x[i];
-                px.y = p.y + delta_y[j];
-                pp = locate_point(px);
-                if (display_map[pp.x][pp.y] == 'P')
-                {
-                    tot++;
-                }
+                continue;
+            }
+            pp = locate_point(px);
+            if (display_map[pp.x][pp.y] == 'P')
+            {
+                tot++;
             }
         }
         if (tot == calc_map[p.x][p.y])
         {
             q.push(p);
-            for (int i = 0; i <= 7; i++)
+
+            for (int j = 0; j <= 7; j++)
             {
-                for (int j = 0; j <= 7; j++)
+                px.x = p.x + delta_x[j];
+                px.y = p.y + delta_y[j];
+                if (px.x < 1 || px.x > 9 || px.y < 1 || px.y > 9)
                 {
-                    px.x = p.x + delta_x[i];
-                    px.y = p.y + delta_y[j];
-                    pp = locate_point(px);
-                    if (display_map[pp.x][pp.y] == 'N')
+                    continue;
+                }
+                pp = locate_point(px);
+                if (display_map[pp.x][pp.y] == 'N')
+                {
+                    if (mine_map[px.x][px.y] == 1)
                     {
-                        display_map[pp.x][pp.y] = calc_map[p.x][p.y] + '0';
-                        if (calc_map[p.x][p.y] == 0)
-                        {
-                            display_map[pp.x][pp.y] = ' ';
-                        }
+                        gameover();
+                        return;
+                    }
+                    display_map[pp.x][pp.y] = calc_map[px.x][px.y] + '0';
+                    if (calc_map[px.x][px.y] == 0)
+                    {
+                        display_map[pp.x][pp.y] = ' ';
                     }
                 }
             }
+
             bfs_reveal_map();
         }
     }
@@ -298,7 +367,7 @@ void read_command()
         }
         else if (c == 's')
         {
-            if (selector.y < 9)
+            if (selector.x < 9)
             {
                 selector.x += 1;
             }
@@ -309,7 +378,7 @@ void read_command()
         }
         else if (c == 'd')
         {
-            if (selector.x < 9)
+            if (selector.y < 9)
             {
                 selector.y += 1;
             }
@@ -327,6 +396,11 @@ void read_command()
                 {
                     // special_map[selector.x][selector.y] = 1;
                     display_map[p1.x][p1.y] = 'P';
+                    tot--;
+                    if (mine_map[selector.x][selector.y] == 1)
+                    {
+                        tot_correct--;
+                    }
                 }
                 else if (display_map[p1.x][p1.y] == 'P')
                 {
@@ -337,6 +411,11 @@ void read_command()
                 {
                     // special_map[selector.x][selector.y] = 0;
                     display_map[p1.x][p1.y] = 'N';
+                    if (mine_map[selector.x][selector.y] == 1)
+                    {
+                        tot_correct++;
+                    }
+                    tot++;
                 }
             }
             else
@@ -550,10 +629,15 @@ int main()
     while (flag)
     {
         system("cls");
-        // print_screen();
-        developer_show_map();
+        print_screen();
+        // developer_show_map();
         read_command();
+        if (tot_correct == 0)
+        {
+            gameover();
+        }
     }
+    // endgame();
     // read_command();
     // developer_show_map();
     // initialize();
